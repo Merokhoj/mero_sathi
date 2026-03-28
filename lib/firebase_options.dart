@@ -71,4 +71,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'mero-sathi-ai-v1.firebasestorage.app',
     iosBundleId: 'com.vaf.meroSathi',
   );
+
 }
