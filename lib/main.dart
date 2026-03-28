@@ -4,8 +4,9 @@ import 'firebase_options.dart';
 import 'google_service.dart';
 import 'device_service.dart';
 import 'voice_assistant.dart';
-import 'ai_intent_processor.dart';
+import 'ai_service.dart';
 import 'notification_service.dart';
+import 'ai_intent_processor.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +35,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final VoiceAssistant _voice = VoiceAssistant();
+  final AIService _ai = AIService();
   String _display = 'Tap the mic and say "Check email" or "Calendar"';
   bool _isListening = false;
   bool _isUserSignedIn = false;
@@ -68,7 +70,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _handleIntent(String text) async {
-    final intent = AIIntentProcessor.parse(text);
+    setState(() => _display = "Thinking...");
+    final intent = await _ai.processVoiceCommand(text);
+    
     switch (intent.action) {
       case 'SEND_EMAIL':
         _voice.speak("Fetching your recent emails.");
@@ -81,7 +85,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _voice.speak("Upcoming events: \${events.join(', ')}");
         break;
       case 'ADD_CALENDAR':
-        final msg = await GoogleService.createQuickEvent("Meeting from Voice AI");
+        final title = intent.params['title'] ?? "Meeting from Voice AI";
+        final msg = await GoogleService.createQuickEvent(title);
         _voice.speak(msg);
         break;
       case 'CHECK_DRIVE':
@@ -90,8 +95,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _voice.speak("Recent files: \${files.join(', ')}");
         break;
       case 'MAKE_CALL':
-        _voice.speak("Initiating call.");
-        DeviceService.makeCall("9800000000"); 
+        final name = intent.params['name'];
+        if (name != null) {
+          _voice.speak("Calling \$name.");
+          // In dynamic version, we should search contacts for this name
+          DeviceService.makeCall("9800000000"); 
+        } else {
+          _voice.speak("Who would you like to call?");
+        }
         break;
       case 'CHECK_TIME':
         _voice.speak("अहिले \${DateTime.now().hour} बजेर \${DateTime.now().minute} मिनेट भएको छ।");
@@ -110,8 +121,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text('MeroSathi Voice AI', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         actions: [
-          if (_isUserSignedIn)
-            IconButton(icon: const Icon(Icons.logout), onPressed: () => setState(() => _isUserSignedIn = false))
+          if (_isUserSignedIn) ...[
+            IconButton(
+              icon: const Icon(Icons.notifications_active),
+              onPressed: () => NotificationService.startListening(),
+              tooltip: "Enable Voice Notifications",
+            ),
+            IconButton(icon: const Icon(Icons.logout), onPressed: () => setState(() => _isUserSignedIn = false)),
+          ]
         ],
       ),
       body: Container(

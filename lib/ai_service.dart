@@ -1,4 +1,5 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:convert';
 import 'ai_intent_processor.dart';
 
 class AIService {
@@ -13,16 +14,24 @@ class AIService {
     final prompt = """
 Analyze this user voice command: "$text".
 Map it to one of these intents: SEND_EMAIL, MAKE_CALL, SEND_SMS, CHECK_CALENDAR, ADD_CALENDAR, CHECK_DRIVE, CHECK_TIME.
-Return JSON ONLY: {"action": "INTENT_NAME", "params": {}}
+Return JSON ONLY: {"action": "INTENT_NAME", "params": {"key": "value"}}
 """;
     
     try {
       final response = await _model.generateContent([Content.text(prompt)]);
-      final jsonResponse = response.text ?? "";
-      // Normally we'd parse JSON here, for now using Keyword processor as backup
-      return AIIntentProcessor.parse(text); 
+      String jsonResponse = response.text ?? "{}";
+      
+      // Sanitizing code blocks if Gemini includes them
+      jsonResponse = jsonResponse.replaceAll("```json", "").replaceAll("```", "").trim();
+      
+      final Map<String, dynamic> data = json.decode(jsonResponse);
+      return AIIntent(
+        data['action'] ?? "UNKNOWN",
+        Map<String, dynamic>.from(data['params'] ?? {}),
+      );
     } catch (e) {
-      return AIIntentProcessor.parse(text); // Fallback to keyword-based
+      // Fallback to keyword-based if Gemini fails or returns invalid JSON
+      return AIIntentProcessor.parse(text);
     }
   }
 }

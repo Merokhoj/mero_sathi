@@ -53,6 +53,7 @@ dependencies:
   android_intent_plus: ^6.0.0
   google_generative_ai: ^0.4.7
   fast_contacts: ^5.0.1
+  flutter_notification_listener: ^1.4.0
 
 dev_dependencies:
   flutter_test:
