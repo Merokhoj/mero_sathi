@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "474518514090",
+    "project_id": "mero-sathi-ai-v1",
+    "storage_bucket": "mero-sathi-ai-v1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:474518514090:android:ca4da05c4dab7f415ce3d3",
+        "android_client_info": {
+          "package_name": "com.vaf.mero_sathi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-ke3URqtK78dF78Edrpk2QDF8s9CyfX4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
