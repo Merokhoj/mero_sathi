@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:telephony/telephony.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:android_intent_plus/android_intent.dart';
@@ -22,7 +23,7 @@ class DeviceService {
     try {
       await _telephony.sendSms(to: number, message: message);
     } catch (e) {
-      print('Sms Error: $e');
+      debugPrint('Sms Error: $e');
     }
   }
 

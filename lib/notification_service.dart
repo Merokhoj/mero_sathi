@@ -9,7 +9,7 @@ class NotificationService {
   static Future<void> initialize() async {
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
-    await _plugin.initialize(settings);
+    await _plugin.initialize(settings: settings);
 
     // Initialize notification listener
     await NotificationsListener.initialize(

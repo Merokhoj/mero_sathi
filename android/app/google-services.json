@@ -12,7 +12,12 @@
           "package_name": "com.vaf.mero_sathi"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "474518514090-a96kkkgd38n57gl91ksg0afle65rgjur.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD-ke3URqtK78dF78Edrpk2QDF8s9CyfX4"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "474518514090-a96kkkgd38n57gl91ksg0afle65rgjur.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

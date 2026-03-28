@@ -12,9 +12,24 @@ val newBuildDir: Directory =
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    val newSubprojectBuildDir = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
+
+    afterEvaluate {
+        val androidExtension = extensions.findByName("android")
+        if (androidExtension != null) {
+            val groupPath = project.group.toString()
+            if (groupPath.isNotEmpty()) {
+                (androidExtension as com.android.build.gradle.BaseExtension).apply {
+                    if (namespace == null) {
+                        namespace = groupPath
+                    }
+                }
+            }
+        }
+    }
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }
