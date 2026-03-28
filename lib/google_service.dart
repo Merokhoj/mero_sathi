@@ -19,7 +19,6 @@ class GoogleService {
       final account = await _googleSignIn.signIn();
       return account;
     } catch (error) {
-      print('Google Sign-In Error: $error');
       return null;
     }
   }
@@ -33,7 +32,6 @@ class GoogleService {
     return AuthenticatedClient(authHeaders, http.Client());
   }
 
-  // --- Gmail ---
   static Future<List<String>> fetchEmails() async {
     final client = await _getAuthClient();
     if (client == null) return ["SignIn Required"];
@@ -47,10 +45,9 @@ class GoogleService {
         snippets.add(detail.snippet ?? "No snippet");
       }
       return snippets;
-    } catch (e) { return ["Error: $e"]; }
+    } catch (e) { return ["Error: \$e"]; }
   }
 
-  // --- Calendar ---
   static Future<List<String>> fetchCalendarEvents() async {
     final client = await _getAuthClient();
     if (client == null) return ["SignIn Required"];
@@ -58,8 +55,8 @@ class GoogleService {
     try {
       final events = await calendar.events.list("primary", timeMin: DateTime.now().toUtc(), maxResults: 5);
       if (events.items == null || events.items!.isEmpty) return ["No upcoming events."];
-      return events.items!.map((e) => "${e.summary} at ${e.start?.dateTime ?? e.start?.date}").toList();
-    } catch (e) { return ["Calendar Error: $e"]; }
+      return events.items!.map((e) => "\${e.summary} at \${e.start?.dateTime ?? e.start?.date}").toList();
+    } catch (e) { return ["Calendar Error: \$e"]; }
   }
 
   static Future<String> createQuickEvent(String summary) async {
@@ -73,11 +70,10 @@ class GoogleService {
     );
     try {
       await calendar.events.insert(event, "primary");
-      return "Event '$summary' scheduled for 1 hour from now.";
-    } catch (e) { return "Error creating event: $e"; }
+      return "Event '\$summary' scheduled.";
+    } catch (e) { return "Error: \$e"; }
   }
 
-  // --- Drive ---
   static Future<List<String>> listDriveFiles() async {
     final client = await _getAuthClient();
     if (client == null) return ["SignIn Required"];
@@ -86,7 +82,7 @@ class GoogleService {
       final fileList = await drive.files.list(pageSize: 5, q: "trashed = false");
       if (fileList.files == null || fileList.files!.isEmpty) return ["No files found."];
       return fileList.files!.map((f) => f.name ?? "Untitled").toList();
-    } catch (e) { return ["Drive Error: $e"]; }
+    } catch (e) { return ["Drive Error: \$e"]; }
   }
 }
 

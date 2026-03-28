@@ -73,12 +73,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 'SEND_EMAIL':
         _voice.speak("Fetching your recent emails.");
         final emails = await GoogleService.fetchEmails();
-        _voice.speak("You have new messages. The first one says: \${emails.first}");
+        _voice.speak("You have new messages. The first one says: \${emails.isNotEmpty ? emails.first : 'No messages'}");
         break;
       case 'CHECK_CALENDAR':
         _voice.speak("Checking your calendar.");
         final events = await GoogleService.fetchCalendarEvents();
-        _voice.speak("Your upcoming events are: \${events.join(', ')}");
+        _voice.speak("Upcoming events: \${events.join(', ')}");
         break;
       case 'ADD_CALENDAR':
         final msg = await GoogleService.createQuickEvent("Meeting from Voice AI");
@@ -87,7 +87,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 'CHECK_DRIVE':
         _voice.speak("Checking your Google Drive.");
         final files = await GoogleService.listDriveFiles();
-        _voice.speak("Your recent files are: \${files.join(', ')}");
+        _voice.speak("Recent files: \${files.join(', ')}");
         break;
       case 'MAKE_CALL':
         _voice.speak("Initiating call.");
@@ -128,7 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(color: Colors.white10),
                       ),
@@ -160,11 +160,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: _isListening 
-            ? [Colors.cyanAccent.withOpacity(0.8), Colors.teal.withOpacity(0.2), Colors.black]
-            : [Colors.teal.withOpacity(0.4), Colors.black],
+            ? [Colors.cyanAccent.withValues(alpha: 0.8), Colors.teal.withValues(alpha: 0.2), Colors.black]
+            : [Colors.teal.withValues(alpha: 0.4), Colors.black],
         ),
         boxShadow: _isListening ? [
-          BoxShadow(color: Colors.cyanAccent.withOpacity(0.3), blurRadius: 40, spreadRadius: 10),
+          BoxShadow(color: Colors.cyanAccent.withValues(alpha: 0.3), blurRadius: 40, spreadRadius: 10),
         ] : [],
       ),
       child: Icon(Icons.support_agent, size: 90, color: _isListening ? Colors.cyanAccent : Colors.teal.shade200),
