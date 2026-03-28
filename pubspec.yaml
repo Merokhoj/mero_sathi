@@ -51,8 +51,8 @@ dependencies:
   flutter_riverpod: ^3.3.1
   path_provider: ^2.1.5
   android_intent_plus: ^6.0.0
-  contacts_service: ^0.6.3
   google_generative_ai: ^0.4.7
+  fast_contacts: ^5.0.1
 
 dev_dependencies:
   flutter_test:
