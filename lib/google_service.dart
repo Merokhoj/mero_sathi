@@ -26,21 +26,34 @@ class GoogleService {
 
   static Future<void> signOut() => _googleSignIn.signOut();
 
-  static Future<http.Client?> getAuthenticatedClient() async {
+  static Future<List<String>> fetchEmails() async {
     final account = _googleSignIn.currentUser;
-    if (account == null) return null;
+    if (account == null) return ["Please sign in first."];
 
     final authHeaders = await account.authHeaders;
-    return AuthenticatedClient(authHeaders, http.Client());
+    final client = AuthenticatedClient(authHeaders, http.Client());
+    final gmail = GmailApi(client);
+
+    try {
+      final results = await gmail.users.messages.list("me", maxResults: 5);
+      if (results.messages == null) return ["No messages found."];
+
+      List<String> snippets = [];
+      for (var msg in results.messages!) {
+        final detail = await gmail.users.messages.get("me", msg.id!);
+        snippets.add(detail.snippet ?? "No snippet");
+      }
+      return snippets;
+    } catch (e) {
+      return ["Error fetching mail: $e"];
+    }
   }
 }
 
 class AuthenticatedClient extends http.BaseClient {
   final Map<String, String> _headers;
   final http.Client _client;
-
   AuthenticatedClient(this._headers, this._client);
-
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
     request.headers.addAll(_headers);

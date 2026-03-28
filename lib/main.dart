@@ -4,29 +4,23 @@ import 'firebase_options.dart';
 import 'google_service.dart';
 import 'device_service.dart';
 import 'voice_assistant.dart';
+import 'ai_intent_processor.dart';
+import 'notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await NotificationService.initialize();
   runApp(const MeroSathiApp());
 }
 
 class MeroSathiApp extends StatelessWidget {
   const MeroSathiApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MeroSathi Voice AI',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
-          brightness: Brightness.dark,
-        ),
-      ),
+      theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark)),
       home: const DashboardScreen(),
     );
   }
@@ -34,148 +28,99 @@ class MeroSathiApp extends StatelessWidget {
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
-
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final VoiceAssistant _voice = VoiceAssistant();
-  String _lastCommand = "नमस्ते! म मेरो साथी, तपाईंलाई के मद्दत गर्न सक्छु?";
+  String _display = 'Tap the mic and say "Check email" or "Call someone"';
   bool _isListening = false;
+  bool _isUserSignedIn = false;
 
   @override
   void initState() {
     super.initState();
-    _initAssistant();
+    _voice.initialize();
+    DeviceService.requestPermissions();
   }
 
-  Future<void> _initAssistant() async {
-    await _voice.initialize();
-    await DeviceService.requestPermissions();
-  }
-
-  void _onListen() async {
+  void _onMic() async {
     if (!_isListening) {
-      bool available = await _voice.initialize();
-      if (available) {
-        setState(() => _isListening = true);
-        _voice.listen((text) {
-          setState(() {
-            _lastCommand = text;
-            _isListening = false;
-          });
-          _processIntent(text);
-        });
+      if (!_isUserSignedIn) {
+        final account = await GoogleService.signIn();
+        if (account != null) {
+          setState(() => _isUserSignedIn = true);
+          _voice.speak("नमस्ते ${account.displayName}! म तपाईंलाई के मद्दत गरूँ?");
+        }
+        return;
       }
+
+      setState(() => _isListening = true);
+      await _voice.listen((text) {
+        setState(() { _display = text; _isListening = false; });
+        _handleIntent(text);
+      });
     } else {
-      setState(() => _isListening = false);
       _voice.stop();
+      setState(() => _isListening = false);
     }
   }
 
-  void _processIntent(String text) {
-    // Basic intent mapping for demonstration
-    if (text.contains("मेल") || text.contains("email")) {
-      _voice.speak("तपाईंसँग ३ वटा इमेलहरू छन्। के तपाईं सुन्न चाहनुहुन्छ?");
-    } else if (text.contains("कल") || text.contains("call")) {
-      _voice.speak("तपाईं कसलाई फोन गर्न चाहनुहुन्छ?");
-    } else if (text.contains("समय") || text.contains("time")) {
-      final now = DateTime.now();
-      _voice.speak("अहिले $now:hour बजेर $now:minute मिनेट भएको छ।");
-    } else {
-      _voice.speak("मैले बुझिनँ, फेरि भन्नुहोस्।");
+  void _handleIntent(String text) async {
+    final intent = AIIntentProcessor.parse(text);
+    switch (intent.action) {
+      case 'SEND_EMAIL':
+        _voice.speak("Fetching your recent emails.");
+        final emails = await GoogleService.fetchEmails();
+        _voice.speak("You have ${emails.length} new messages. The first one says: ${emails.first}");
+        break;
+      case 'MAKE_CALL':
+        _voice.speak("Initiating call.");
+        DeviceService.makeCall("9800000000"); // Demo number
+        break;
+      case 'SEND_SMS':
+        _voice.speak("Sending SMS.");
+        DeviceService.sendSms("9800000000", "Hello from MeroSathi AI!");
+        break;
+      case 'CHECK_TIME':
+        _voice.speak("अहिले ${DateTime.now().hour} बजेर ${DateTime.now().minute} मिनेट भएको छ।");
+        break;
+      default:
+        _voice.speak("I am sorry, I did not catch that. Please try again.");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.indigo.shade900, Colors.black],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "MeroSathi",
-                style: TextStyle(
-                  fontSize: 42,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 2,
-                ),
-              ),
-              const SizedBox(height: 50),
-              _buildPulseIndicator(),
-              const SizedBox(height: 50),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    _lastCommand,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.white70,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 80),
-              FloatingActionButton.large(
-                onPressed: _onListen,
-                backgroundColor: _isListening ? Colors.red : Colors.indigoAccent,
-                child: Icon(_isListening ? Icons.stop : Icons.mic, size: 40),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                _isListening ? "Listening..." : "Tap to speak",
-                style: TextStyle(color: Colors.white.withOpacity(0.5)),
-              ),
-            ],
-          ),
-        ),
+      appBar: AppBar(
+        title: const Text('MeroSathi Voice AI'),
+        actions: [
+          if (_isUserSignedIn)
+            IconButton(icon: const Icon(Icons.logout), onPressed: () => setState(() => _isUserSignedIn = false))
+        ],
       ),
-    );
-  }
-
-  Widget _buildPulseIndicator() {
-    return Container(
-      width: 150,
-      height: 150,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: _isListening ? Colors.cyanAccent : Colors.white24,
-          width: 2,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.support_agent, size: 100, color: Colors.tealAccent),
+            const SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(_display, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, color: Colors.white70)),
+            ),
+            const SizedBox(height: 50),
+            FloatingActionButton.large(
+              onPressed: _onMic,
+              backgroundColor: _isListening ? Colors.red : Colors.tealAccent,
+              child: Icon(_isListening ? Icons.stop : Icons.mic, size: 40)
+            ),
+            const SizedBox(height: 20),
+            Text(_isUserSignedIn ? (_isListening ? 'Assistant is listening...' : 'Say something...') : 'Tap to Sign in with Google')
+          ],
         ),
-        boxShadow: _isListening
-            ? [
-                BoxShadow(
-                  color: Colors.cyanAccent.withOpacity(0.5),
-                  blurRadius: 40,
-                  spreadRadius: 10,
-                )
-              ]
-            : [],
-      ),
-      child: Icon(
-        Icons.support_agent,
-        size: 80,
-        color: _isListening ? Colors.cyanAccent : Colors.white38,
       ),
     );
   }
